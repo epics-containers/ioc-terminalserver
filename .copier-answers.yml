@@ -1,9 +1,9 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 4.0.1
+_commit: 4.1.0
 _src_path: gh:epics-containers/ioc-template
 description: A Generic IOC for the terminal server
 git_platform: github.com
-github_org: maxherbs
+github_org: epics-containers
 name: ioc-terminalserver
-repo_uri: git@github.com:maxherbs/ioc-terminalserver.git
+repo_uri: git@github.com:epics-containers/ioc-terminalserver.git
 rtems: false

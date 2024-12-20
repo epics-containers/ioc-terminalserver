@@ -34,7 +34,7 @@ RUN iocStats/install.sh 3.2.0
 ##### CUSTOM MODULES
 
 COPY ibek-support/calc/ calc
-RUN calc/install.sh R3-7
+RUN calc/install.sh R3-7-5
 
 COPY ibek-support/autosave/ autosave
 RUN autosave/install.sh R5-11
