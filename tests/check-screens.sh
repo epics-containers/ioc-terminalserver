@@ -3,7 +3,7 @@
 # Generate the runtime assets with no terminal server attached and check that
 # the device and iocStats screens are among them. The IOC binary is not run:
 # with no SNMP agent answering, iocInit waits on a timeout for each output
-# record, and a 32 channel server has over 400 of them.
+# record, and a 32 channel Moxa has 386 of them.
 # The generated screens are left in the folder given as the second argument.
 
 TAG=${1:?usage: check-screens.sh <image> <opi output folder>}
