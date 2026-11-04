@@ -12,7 +12,7 @@ set -x
 mkdir -p ${OPI}
 chmod 777 ${OPI}
 
-result=$(docker run --rm --security-opt=label=disable \
+result=$(timeout -k 10 180 docker run --rm --security-opt=label=disable \
     -v ${THIS}/screens-config:/epics/ioc/config:ro \
     -v ${OPI}:/epics/opi \
     ${TAG} /epics/ioc/start.sh 2>&1)
