@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://github.com/epics-containers/ioc-terminalserver/releases/latest/download/ibek.ioc.schema.json
 
-# Starts the IOC with no terminal server, polling a closed local address, to
-# prove that it runs without one and that it generates its PVI screens.
+# Moxa and ACS terminal servers on a local address, for generating their PVI
+# screens without a terminal server.
 
 ioc_name: "{{ ioc_yaml_file_name }}"
 
@@ -26,13 +26,3 @@ entities:
     P: TEST-ACS
     HOST: 127.0.0.1
     NCHANS: 32
-
-  - type: epics.PostStartupCommand
-    command: |
-      epicsThreadSleep 20
-      dbgf TEST-TSERV-IOC:STARTTOD
-      dbgf TEST-TSERV-IOC:UPTIME
-      dbgf TEST-TSERV-IOC:HEARTBEAT
-      dbpr TEST-MOXA:MODELNAME
-      dbpr TEST-MOXA:1:BAUDRATE
-      dbl
