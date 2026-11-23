@@ -1,9 +1,6 @@
-ARG IMAGE_EXT
-
-ARG BASE=7.0.8ec2
 ARG REGISTRY=ghcr.io/epics-containers
-ARG RUNTIME=${REGISTRY}/epics-base${IMAGE_EXT}-runtime:${BASE}
-ARG DEVELOPER=${REGISTRY}/epics-base${IMAGE_EXT}-developer:${BASE}
+ARG RUNTIME=${REGISTRY}/epics-base-runtime:7.0.11ec2
+ARG DEVELOPER=${REGISTRY}/epics-base-developer:7.0.11ec2
 
 ##### build stage ##############################################################
 FROM  ${DEVELOPER} AS developer
@@ -14,50 +11,73 @@ ENV SOURCE_FOLDER=/epics/generic-source
 # connect ioc source folder to its know location
 RUN ln -s ${SOURCE_FOLDER}/ioc ${IOC}
 
-# Get the current version of ibek
+# get the current versions of pvi and ibek
 COPY requirements.txt requirements.txt
-RUN pip install --upgrade -r requirements.txt
+RUN uv pip install --upgrade -r requirements.txt
 
 WORKDIR ${SOURCE_FOLDER}/ibek-support
 
-# copy the global ibek files
-COPY ibek-support/_global/ _global
-
-COPY ibek-support/pvxs/ pvxs/
-RUN pvxs/install.sh 1.3.1
+COPY ibek-support/_ansible _ansible
+ENV PATH=$PATH:${SOURCE_FOLDER}/ibek-support/_ansible
 
 COPY ibek-support/iocStats/ iocStats
-RUN iocStats/install.sh 3.2.0
+RUN ansible.sh iocStats
 
+COPY ibek-support/sequencer/ sequencer
+RUN ansible.sh sequencer
 
-
-##### CUSTOM MODULES
+COPY ibek-support/sscan/ sscan
+RUN ansible.sh sscan
 
 COPY ibek-support/calc/ calc
-RUN calc/install.sh R3-7-5
+RUN ansible.sh calc
+
+COPY ibek-support/asyn/ asyn
+RUN ansible.sh asyn
+
+COPY ibek-support/busy/ busy
+RUN ansible.sh busy
 
 COPY ibek-support/autosave/ autosave
-RUN autosave/install.sh R5-11
+RUN ansible.sh autosave
+
+COPY ibek-support/pvlogging/ pvlogging
+RUN ansible.sh pvlogging
 
 COPY ibek-support/snmp/ snmp
-RUN snmp/install.sh R2.5
+RUN ansible.sh snmp
 
 COPY ibek-support/terminalserver/ terminalserver
-RUN terminalserver/install.sh 2-7
+RUN ansible.sh terminalserver
 
 
 # get the ioc source and build it
 COPY ioc ${SOURCE_FOLDER}/ioc
-RUN cd ${IOC} && ./install.sh && make
+RUN ansible.sh ioc
 
-# install runtime proxy for non-native builds
-RUN bash ${IOC}/install_proxy.sh
+# generate a manifest of installed EPICS modules and python packages
+# IOC_VERSION is declared here, not earlier: every RUN after an ARG sees it,
+# so a new value (each branch or tag) would rebuild all the steps above
+ARG IOC_VERSION=unknown
+COPY scripts/generate_manifest.py /tmp/generate_manifest.py
+RUN python3 /tmp/generate_manifest.py "${IOC_VERSION}"
+
+# record the source this image is built from, for 'ibek dev sync' to compare
+# with the project folder that a devcontainer mounts over ${SOURCE_FOLDER}.
+# This comes last so that an edit to the Dockerfile rebuilds nothing above.
+# The stamp reads these two files, which are then removed so that they do not
+# reach the runtime image
+COPY Dockerfile requirements.txt ${SOURCE_FOLDER}/
+RUN ibek dev stamp && \
+    rm ${SOURCE_FOLDER}/Dockerfile ${SOURCE_FOLDER}/requirements.txt
 
 ##### runtime preparation stage ################################################
 FROM developer AS runtime_prep
 
 # get the products from the build stage and reduce to runtime assets only
-RUN ibek ioc extract-runtime-assets /assets
+# /python is created by uv and is needed in the runtime target
+# /epics/versions.json is the manifest of support module and python versions
+RUN ibek ioc extract-runtime-assets /assets /python /epics/versions.json
 
 ##### runtime stage ############################################################
 FROM ${RUNTIME} AS runtime
@@ -66,6 +86,7 @@ FROM ${RUNTIME} AS runtime
 COPY --from=runtime_prep /assets /
 
 # install runtime system dependencies, collected from install.sh scripts
-RUN ibek support apt-install-runtime-packages --skip-non-native
+RUN ibek support apt-install-runtime-packages
 
+# launch the startup script with stdio-expose to allow console connections
 CMD ["bash", "-c", "${IOC}/start.sh"]
