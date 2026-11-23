@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://github.com/epics-containers/ioc-terminalserver/releases/latest/download/ibek.ioc.schema.json
+
+# Moxa and ACS terminal servers on a local address, for generating their PVI
+# screens without a terminal server.
+
+ioc_name: "{{ ioc_yaml_file_name }}"
+
+description: Moxa and ACS terminal servers with no device attached, for checking screens
+
+entities:
+  - type: epics.EpicsEnvSet
+    name: EPICS_TZ
+    value: "GMT0BST"
+
+  - type: devIocStats.iocAdminSoft
+    IOC: TEST-TSERV-IOC
+
+  - type: terminalServer.Moxa32
+    name: MOXA
+    P: TEST-MOXA
+    HOST: 127.0.0.1
+    NCHANS: 32
+
+  - type: terminalServer.Acs32
+    name: ACS
+    P: TEST-ACS
+    HOST: 127.0.0.1
+    NCHANS: 32
