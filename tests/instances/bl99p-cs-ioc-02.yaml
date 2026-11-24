@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://github.com/epics-containers/ioc-terminalserver/releases/download/2024.12.1/ibek.ioc.schema.json
+# Copied from https://gitlab.diamond.ac.uk/controls/containers/beamline/p99-services
+# services/bl99p-cs-ioc-02/config/ioc.yaml at commit 21e2c8d3785eedec76ec5e3a994d01ab1a71e2fa
+# Changed, so that nobody running this test reaches a real device:
+# - 1 device address replaced with 127.0.0.1
+# tests/run-tests.sh runs it with start.sh --test, which generates the
+# runtime assets but does not launch the IOC.
+
+# TODO replace above with the generic IOC schema this IOC is based on
+ioc_name: "{{ _global.get_env('IOC_NAME') }}"
+
+description: REPLACE WITH DESCRIPTION
+
+entities:
+  - type: epics.EpicsEnvSet
+    name: EPICS_TS_MIN_WEST
+    value: '0'
+
+  - type: devIocStats.iocAdminSoft
+    IOC: '{{ ioc_name | upper }}'
+
+  - type: epics.EpicsEnvSet
+    name: IOCSH_PS1
+    value: BL99P-CS-IOC-02
+
+  # - type: devIocStats.devIocStatsHelper
+  #   ioc: BL99P-CS-IOC-02
+  #   IOC: BL99P-CS-IOC-02
+  #   name: IOC-STATS
+
+  # - type: autosave.Autosave
+  #   bl: 'True'
+  #   iocName: BL99P-CS-IOC-02
+  #   path: /dls_sw/p99/epics/autosave
+
+  - type: terminalServer.Moxa16
+    HOST: 127.0.0.1
+    NCHANS: 16
+    P: BL99P-NT-TSERV-01
+    R: ''
+    name: TSERV-01
+
